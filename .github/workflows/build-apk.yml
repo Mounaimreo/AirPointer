@@ -1,12 +1,3 @@
-# كود بناء ملف الـ APK التلقائي لتطبيق AirPointer (جاهز للنسخ بنقرة واحدة)
-
-**المشروع:** AirPointer (مؤشر سطح المكتب بالهواء)  
-**المطور:** MOUNAIM IA  
-**المسار في GitHub:** `.github/workflows/build-apk.yml`
-
----
-
-```yaml
 name: Build AirPointer Standalone APK
 
 on:
@@ -26,33 +17,47 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: 2. Build AirPointer APK
+      - name: 2. Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: 3. Assemble AirPointer APK Project
         run: |
-          mkdir -p airapp/app/src/main/java/ai/mounaim/airpointer
-          mkdir -p airapp/app/src/main/res/values
-          cd airapp
-          gradle wrapper
-          
+          mkdir -p app/src/main/java/ai/mounaim/airpointer
+          mkdir -p app/src/main/res/values
+
+          # Root Settings
           cat << 'EOF' > settings.gradle
           rootProject.name = "AirPointer"
           include ':app'
           EOF
 
+          # Root Build
           cat << 'EOF' > build.gradle
           buildscript {
-              repositories { google(); mavenCentral() }
-              dependencies { classpath 'com.android.tools.build:gradle:8.2.2' }
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+              dependencies {
+                  classpath 'com.android.tools.build:gradle:8.2.2'
+              }
           }
           allprojects {
-              repositories { google(); mavenCentral() }
+              repositories {
+                  google()
+                  mavenCentral()
+              }
           }
           EOF
 
+          # App Build
           cat << 'EOF' > app/build.gradle
           apply plugin: 'com.android.application'
+
           android {
               namespace 'ai.mounaim.airpointer'
               compileSdk 34
+
               defaultConfig {
                   applicationId "ai.mounaim.airpointer"
                   minSdk 26
@@ -60,24 +65,32 @@ jobs:
                   versionCode 1
                   versionName "1.0.0"
               }
+
               buildTypes {
                   release {
                       minifyEnabled false
                   }
               }
           }
+
           dependencies {
               implementation 'androidx.appcompat:appcompat:1.6.1'
               implementation 'com.google.android.material:material:1.11.0'
           }
           EOF
 
+          # App Manifest
           cat << 'EOF' > app/src/main/AndroidManifest.xml
           <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ai.mounaim.airpointer">
               <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
               <uses-permission android:name="android.permission.CAMERA"/>
-              <application android:label="AirPointer" android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-                  <activity android:name=".MainActivity" android:exported="true">
+              <uses-permission android:name="android.permission.VIBRATE"/>
+              <application
+                  android:label="AirPointer"
+                  android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true">
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN"/>
                           <category android:name="android.intent.category.LAUNCHER"/>
@@ -87,10 +100,12 @@ jobs:
           </manifest>
           EOF
 
+          # MainActivity Code
           cat << 'EOF' > app/src/main/java/ai/mounaim/airpointer/MainActivity.kt
           package ai.mounaim.airpointer
           import android.os.Bundle
           import androidx.appcompat.app.AppCompatActivity
+
           class MainActivity : AppCompatActivity() {
               override fun onCreate(savedInstanceState: Bundle?) {
                   super.onCreate(savedInstanceState)
@@ -98,12 +113,14 @@ jobs:
           }
           EOF
 
-          ./gradlew assembleDebug --stacktrace
+          # Generate Gradle Wrapper & Build APK
+          gradle wrapper
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --stacktrace --no-daemon
 
-      - name: 3. Upload APK File
+      - name: 4. Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: AirPointer-v1.0.0-Universal
-          path: airapp/app/build/outputs/apk/debug/*.apk
+          path: app/build/outputs/apk/debug/*.apk
           retention-days: 7
-```
