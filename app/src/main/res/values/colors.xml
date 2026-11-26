@@ -1,0 +1,7 @@
+<resources>
+    <color name="background">#081318</color>
+    <color name="surface">#102229</color>
+    <color name="teal">#21D3C4</color>
+    <color name="text">#F2FFFD</color>
+    <color name="muted">#9AB5B1</color>
+</resources>

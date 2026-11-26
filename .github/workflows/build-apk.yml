@@ -1,126 +1,64 @@
-name: Build AirPointer Standalone APK
+name: Build and Release AirPointer
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
-    name: Build Android APK
     runs-on: ubuntu-latest
 
     steps:
-      - name: 1. Setup Java 17
+      - uses: actions/checkout@v4
+
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
+          cache: gradle
 
-      - name: 2. Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+      - name: Setup Gradle 8.2.2
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.2.2'
 
-      - name: 3. Assemble AirPointer APK Project
+      - name: Download hand tracker model
         run: |
-          mkdir -p app/src/main/java/ai/mounaim/airpointer
-          mkdir -p app/src/main/res/values
+          mkdir -p app/src/main/assets
+          curl --fail --location --retry 3 \
+            https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task \
+            --output app/src/main/assets/hand_landmarker.task
 
-          # Root Settings
-          cat << 'EOF' > settings.gradle
-          rootProject.name = "AirPointer"
-          include ':app'
-          EOF
+      - name: Generate Gradle wrapper
+        run: gradle wrapper --gradle-version 8.2.2
 
-          # Root Build
-          cat << 'EOF' > build.gradle
-          buildscript {
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-              dependencies {
-                  classpath 'com.android.tools.build:gradle:8.2.2'
-              }
-          }
-          allprojects {
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-          }
-          EOF
+      - name: Build APK
+        run: |
+          chmod +x gradlew
+          ./gradlew clean assembleDebug --stacktrace --no-daemon
 
-          # App Build
-          cat << 'EOF' > app/build.gradle
-          apply plugin: 'com.android.application'
+      - name: Copy downloadable APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk AirPointer-v1.1.0.apk
 
-          android {
-              namespace 'ai.mounaim.airpointer'
-              compileSdk 34
-
-              defaultConfig {
-                  applicationId "ai.mounaim.airpointer"
-                  minSdk 26
-                  targetSdk 34
-                  versionCode 1
-                  versionName "1.0.0"
-              }
-
-              buildTypes {
-                  release {
-                      minifyEnabled false
-                  }
-              }
-          }
-
-          dependencies {
-              implementation 'androidx.appcompat:appcompat:1.6.1'
-              implementation 'com.google.android.material:material:1.11.0'
-          }
-          EOF
-
-          # App Manifest
-          cat << 'EOF' > app/src/main/AndroidManifest.xml
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ai.mounaim.airpointer">
-              <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
-              <uses-permission android:name="android.permission.CAMERA"/>
-              <uses-permission android:name="android.permission.VIBRATE"/>
-              <application
-                  android:label="AirPointer"
-                  android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-                  <activity
-                      android:name=".MainActivity"
-                      android:exported="true">
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN"/>
-                          <category android:name="android.intent.category.LAUNCHER"/>
-                      </intent-filter>
-                  </activity>
-              </application>
-          </manifest>
-          EOF
-
-          # MainActivity Code
-          cat << 'EOF' > app/src/main/java/ai/mounaim/airpointer/MainActivity.kt
-          package ai.mounaim.airpointer
-          import android.os.Bundle
-          import androidx.appcompat.app.AppCompatActivity
-
-          class MainActivity : AppCompatActivity() {
-              override fun onCreate(savedInstanceState: Bundle?) {
-                  super.onCreate(savedInstanceState)
-              }
-          }
-          EOF
-
-          # Generate Gradle Wrapper & Build APK
-          gradle wrapper
-          chmod +x ./gradlew
-          ./gradlew assembleDebug --stacktrace --no-daemon
-
-      - name: 4. Upload APK Artifact
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: AirPointer-v1.0.0-Universal
-          path: app/build/outputs/apk/debug/*.apk
-          retention-days: 7
+          name: AirPointer-v1.1.0
+          path: AirPointer-v1.1.0.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish latest download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete airpointer-latest --cleanup-tag --yes 2>/dev/null || true
+          gh release create airpointer-latest AirPointer-v1.1.0.apk \
+            --title "AirPointer v1.1.0" \
+            --notes "أحدث نسخة من تطبيق AirPointer — تتبع الإصبع والمؤشر والنقر الجوي" \
+            --prerelease
