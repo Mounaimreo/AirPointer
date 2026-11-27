@@ -3,7 +3,6 @@ package ai.mounaim.airpointer
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.view.Surface
@@ -36,10 +35,6 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.overlayButton.setOnClickListener {
-            startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                Uri.parse("package:$packageName")))
-        }
         binding.accessibilityButton.setOnClickListener {
             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
@@ -49,12 +44,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startPointer() {
-        if (!Settings.canDrawOverlays(this)) {
-            Toast.makeText(this, getString(R.string.overlay_permission), Toast.LENGTH_LONG).show()
-            startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                Uri.parse("package:$packageName")))
-            return
-        }
         if (PointerAccessibilityService.instance == null) {
             Toast.makeText(this, getString(R.string.accessibility_permission), Toast.LENGTH_LONG).show()
             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
@@ -94,7 +83,7 @@ class MainActivity : AppCompatActivity() {
         running = false
         handLandmarker?.close()
         handLandmarker = null
-        PointerBridge.stop(this)
+        PointerBridge.stop()
         binding.startButton.text = getString(R.string.start_pointer)
         binding.status.text = "تم إيقاف المؤشر"
     }
@@ -147,7 +136,7 @@ class MainActivity : AppCompatActivity() {
         val pinching = distance < 0.055f
 
         runOnUiThread {
-            PointerBridge.setPosition(this, x, y, pinching)
+            PointerBridge.setPosition(x, y, pinching)
             if (pinching && !wasPinching) {
                 PointerAccessibilityService.tap(x.toFloat(), y.toFloat())
             }

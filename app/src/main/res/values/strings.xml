@@ -1,10 +1,8 @@
 <resources>
     <string name="app_name">AirPointer</string>
     <string name="camera_permission">يلزم إذن الكاميرا لتتبع يدك وحركة المؤشر.</string>
-    <string name="overlay_permission">يلزم إذن العرض فوق التطبيقات للتحكم بالمؤشر فوق الشاشة.</string>
-    <string name="accessibility_permission">يلزم تفعيل خدمة AirPointer في إعدادات سهولة الاستخدام لتنفيذ النقرات.</string>
+    <string name="accessibility_permission">تتيح خدمة AirPointer عرض مؤشر غير تفاعلي وتنفيذ النقرات التي تطلبها بإشارات اليد. لا تقرأ محتوى الشاشة.</string>
     <string name="start_pointer">تشغيل المؤشر</string>
     <string name="stop_pointer">إيقاف المؤشر</string>
-    <string name="open_overlay_settings">السماح بالعرض فوق التطبيقات</string>
-    <string name="open_accessibility_settings">تفعيل خدمة التحكم بالنقر</string>
+    <string name="open_accessibility_settings">تفعيل خدمة AirPointer من إعدادات سهولة الاستخدام</string>
 </resources>

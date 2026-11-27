@@ -49,13 +49,13 @@ jobs:
           if-no-files-found: ignore
 
       - name: Copy downloadable APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk AirPointer-v1.1.0.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk AirPointer-v1.2.0.apk
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: AirPointer-v1.1.0
-          path: AirPointer-v1.1.0.apk
+          name: AirPointer-v1.2.0
+          path: AirPointer-v1.2.0.apk
           if-no-files-found: error
           retention-days: 30
 
@@ -64,7 +64,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete airpointer-latest --cleanup-tag --yes 2>/dev/null || true
-          gh release create airpointer-latest AirPointer-v1.1.0.apk \
-            --title "AirPointer v1.1.0" \
-            --notes "أحدث نسخة من تطبيق AirPointer — تتبع الإصبع والمؤشر والنقر الجوي" \
+          gh release create airpointer-latest AirPointer-v1.2.0.apk \
+            --title "AirPointer v1.2.0" \
+            --notes "AirPointer 1.2.0: Accessibility overlay without SYSTEM_ALERT_WINDOW permission." \
             --prerelease
