@@ -3,6 +3,7 @@ package ai.mounaim.airpointer
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.view.Surface
@@ -30,6 +31,16 @@ class MainActivity : AppCompatActivity() {
     private var running = false
     private var wasPinching = false
 
+    private var smoothedX = -1f
+    private var smoothedY = -1f
+    private var pinchStartTime = 0L
+    private var pinchStartX = 0f
+    private var pinchStartY = 0f
+    private var longPressSent = false
+    private var lastTapTime = 0L
+    private var openPalmStart: Pair<Float, Float>? = null
+    private var gestureCooldownUntil = 0L
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -37,6 +48,10 @@ class MainActivity : AppCompatActivity() {
 
         binding.accessibilityButton.setOnClickListener {
             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        }
+        binding.overlayButton.setOnClickListener {
+            startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:$packageName")))
         }
         binding.startButton.setOnClickListener {
             if (running) stopPointer() else startPointer()
@@ -51,6 +66,12 @@ class MainActivity : AppCompatActivity() {
         }
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), cameraPermission)
+            return
+        }
+        if (!Settings.canDrawOverlays(this)) {
+            Toast.makeText(this, getString(R.string.overlay_permission), Toast.LENGTH_LONG).show()
+            startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:$packageName")))
             return
         }
 
@@ -73,6 +94,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
+        PointerBridge.start(this)
         startCamera()
         running = true
         binding.startButton.text = getString(R.string.stop_pointer)
@@ -83,7 +105,7 @@ class MainActivity : AppCompatActivity() {
         running = false
         handLandmarker?.close()
         handLandmarker = null
-        PointerBridge.stop()
+        PointerBridge.stop(this)
         binding.startButton.text = getString(R.string.start_pointer)
         binding.status.text = "تم إيقاف المؤشر"
     }
@@ -120,28 +142,112 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleResult(result: com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarkerResult) {
         val hands = result.landmarks()
-        if (hands.isEmpty()) return
+        if (hands.isEmpty()) {
+            openPalmStart = null
+            return
+        }
         val landmarks = hands[0]
         val index = landmarks[8]
         val thumb = landmarks[4]
 
         val screenWidth = resources.displayMetrics.widthPixels
         val screenHeight = resources.displayMetrics.heightPixels
-        val x = ((1f - index.x()) * screenWidth).toInt().coerceIn(0, screenWidth)
-        val y = (index.y() * screenHeight).toInt().coerceIn(0, screenHeight)
+        val rawX = ((1f - index.x()) * screenWidth).coerceIn(0f, screenWidth.toFloat())
+        val rawY = (index.y() * screenHeight).coerceIn(0f, screenHeight.toFloat())
+
+        if (smoothedX < 0f) {
+            smoothedX = rawX
+            smoothedY = rawY
+        } else {
+            smoothedX = smoothedX * 0.38f + rawX * 0.62f
+            smoothedY = smoothedY * 0.38f + rawY * 0.62f
+        }
+        val x = smoothedX
+        val y = smoothedY
 
         val dx = index.x() - thumb.x()
         val dy = index.y() - thumb.y()
         val distance = sqrt(dx * dx + dy * dy)
         val pinching = distance < 0.055f
+        val now = System.currentTimeMillis()
+
+        if (pinching && pinchStartTime == 0L) {
+            pinchStartTime = now
+            pinchStartX = x
+            pinchStartY = y
+            longPressSent = false
+        }
+
+        if (pinching) {
+            val holdDuration = now - pinchStartTime
+            val movement = kotlin.math.abs(x - pinchStartX) + kotlin.math.abs(y - pinchStartY)
+            if (holdDuration >= 650 && movement < 45f && !longPressSent) {
+                PointerAccessibilityService.longPress(x, y)
+                binding.status.text = "ضغطة مطولة — تحريك الإصبع للسحب"
+                longPressSent = true
+            }
+        } else if (pinchStartTime != 0L) {
+            val duration = now - pinchStartTime
+            val movementX = kotlin.math.abs(x - pinchStartX)
+            val movementY = kotlin.math.abs(y - pinchStartY)
+            val moved = movementX + movementY
+
+            if (duration >= 220 && moved > 55f) {
+                PointerAccessibilityService.swipe(pinchStartX, pinchStartY, x, y, 360)
+                binding.status.text = "سحب جوي تم تنفيذه"
+            } else if (duration < 650 && !longPressSent) {
+                if (now - lastTapTime in 150L..420L) {
+                    PointerAccessibilityService.doubleTap(x, y)
+                    binding.status.text = "نقر مزدوج"
+                    lastTapTime = 0L
+                } else {
+                    PointerAccessibilityService.tap(x, y)
+                    binding.status.text = "نقر جوي"
+                    lastTapTime = now
+                }
+            }
+            pinchStartTime = 0L
+            longPressSent = false
+        }
+
+        val indexUp = landmarks[8].y() < landmarks[6].y() - 0.025f
+        val middleUp = landmarks[12].y() < landmarks[10].y() - 0.025f
+        val ringUp = landmarks[16].y() < landmarks[14].y() - 0.025f
+        val pinkyUp = landmarks[20].y() < landmarks[18].y() - 0.025f
+        val openPalm = indexUp && middleUp && ringUp && pinkyUp
+
+        if (openPalm && now >= gestureCooldownUntil) {
+            val palmCenterX = ((1f - (landmarks[5].x() + landmarks[17].x()) / 2f) * screenWidth)
+            val palmCenterY = ((landmarks[5].y() + landmarks[17].y()) / 2f * screenHeight)
+
+            if (openPalmStart == null) {
+                openPalmStart = Pair(palmCenterX, palmCenterY)
+            } else {
+                val start = openPalmStart!!
+                val deltaX = palmCenterX - start.first
+                val deltaY = palmCenterY - start.second
+
+                if (kotlin.math.abs(deltaX) > 150f && kotlin.math.abs(deltaX) > kotlin.math.abs(deltaY) * 1.15f) {
+                    if (deltaX < 0f) PointerAccessibilityService.back()
+                    else PointerAccessibilityService.recentApps()
+                    binding.status.text = if (deltaX < 0f) "إيماءة كف: رجوع" else "إيماءة كف: التطبيقات الحديثة"
+                    openPalmStart = null
+                    gestureCooldownUntil = now + 900
+                } else if (kotlin.math.abs(deltaY) > 140f && kotlin.math.abs(deltaY) > kotlin.math.abs(deltaX) * 1.15f) {
+                    if (deltaY < 0f) PointerAccessibilityService.scrollDown(palmCenterX, palmCenterY)
+                    else PointerAccessibilityService.scrollUp(palmCenterX, palmCenterY)
+                    binding.status.text = if (deltaY < 0f) "إيماءة كف: تمرير للأسفل" else "إيماءة كف: تمرير للأعلى"
+                    openPalmStart = null
+                    gestureCooldownUntil = now + 900
+                }
+            }
+        } else if (!openPalm) {
+            openPalmStart = null
+        }
 
         runOnUiThread {
-            PointerBridge.setPosition(x, y, pinching)
-            if (pinching && !wasPinching) {
-                PointerAccessibilityService.tap(x.toFloat(), y.toFloat())
-            }
+            PointerBridge.setPosition(this, x.toInt(), y.toInt(), pinching)
         }
-        wasPinching = pinching
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {

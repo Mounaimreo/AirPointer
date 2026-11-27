@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background"
-    android:padding="20dp">
+    android:padding="16dp">
 
     <TextView
         android:id="@+id/title"
@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:text="AirPointer"
         android:textColor="@color/text"
-        android:textSize="30sp"
+        android:textSize="28sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -22,10 +22,10 @@
         android:id="@+id/status"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="أشر بإصبع السبابة وحركه فوق الكاميرا"
+        android:layout_marginTop="4dp"
+        android:text="أشر بإصبع السبابة من مسافة 5 إلى 10 سم"
         android:textColor="@color/muted"
-        android:textSize="15sp"
+        android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/title" />
@@ -33,12 +33,10 @@
     <androidx.cardview.widget.CardView
         android:id="@+id/cameraCard"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="20dp"
-        app:cardCornerRadius="24dp"
+        android:layout_height="240dp"
+        android:layout_marginTop="12dp"
+        app:cardCornerRadius="20dp"
         app:cardElevation="0dp"
-        app:layout_constraintBottom_toTopOf="@id/startButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/status">
@@ -51,11 +49,120 @@
             app:scaleType="fillCenter" />
     </androidx.cardview.widget.CardView>
 
+    <ScrollView
+        android:id="@+id/guide"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@id/overlayButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/cameraCard">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="دليل التحكم باليد"
+                android:textColor="@color/text"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="• تحريك المؤشر: استخدم طرف السبابة أمام الكاميرا لمسافة 5–10 سم."
+                android:textColor="@color/muted"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="• النقر: قرّب الإبهام من السبابة بسرعة، ثم افصلهما."
+                android:textColor="@color/muted"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="• النقر المزدوج: كرر القرص مرتين متتاليتين."
+                android:textColor="@color/muted"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="• السحب: امسك قرصة الإبهام والسبابة وحرك اليد، وافصل لإسقاط السحب."
+                android:textColor="@color/muted"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="• الضغطة المطولة: ابقِ الإبهام والسبابة مقربين لأكثر من 650 مللي ثانية."
+                android:textColor="@color/muted"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="• تمرير: افتح الكف وسحبه لأعلى أو أسفل."
+                android:textColor="@color/muted"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="• رجوع: افتح الكف وحركه يمينًا إلى يسار."
+                android:textColor="@color/muted"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="• التطبيقات الحديثة: افتح الكف وحركه يسارًا إلى يمين."
+                android:textColor="@color/muted"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="الإضاءة الجيدة ووجود يد واحدة أمام الكاميرا تحسن الدقة والسرعة."
+                android:textColor="@color/teal"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </ScrollView>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/overlayButton"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:text="السماح بعرض المؤشر فوق كل التطبيقات"
+        app:layout_constraintBottom_toTopOf="@id/startButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/startButton"
         android:layout_width="0dp"
         android:layout_height="56dp"
-        android:text="@string/start_pointer"
+        android:text="تشغيل المؤشر"
         app:cornerRadius="16dp"
         app:layout_constraintBottom_toTopOf="@id/accessibilityButton"
         app:layout_constraintEnd_toEndOf="parent"
@@ -66,7 +173,7 @@
         style="@style/Widget.Material3.Button.TextButton"
         android:layout_width="0dp"
         android:layout_height="48dp"
-        android:text="@string/open_accessibility_settings"
+        android:text="تفعيل النقرات والتحكم في الهاتف"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

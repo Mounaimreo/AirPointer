@@ -49,23 +49,23 @@ jobs:
           if-no-files-found: ignore
 
       - name: Copy downloadable APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk AirPointer-v1.2.0.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk AirPointer-v1.4.0.apk
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: AirPointer-v1.2.0
-          path: AirPointer-v1.2.0.apk
+          name: AirPointer-v1.4.0
+          path: AirPointer-v1.4.0.apk
           if-no-files-found: error
           retention-days: 30
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: airpointer-v1.2.0
-          name: AirPointer v1.2.0
-          body: "AirPointer 1.2.0: Accessibility overlay without SYSTEM_ALERT_WINDOW permission."
-          files: AirPointer-v1.2.0.apk
+          tag_name: airpointer-v1.4.0
+          name: AirPointer v1.4.0
+          body: "Full-screen air cursor with tap, double tap, drag, long press, scroll, back and recent-app gestures."
+          files: AirPointer-v1.4.0.apk
           draft: false
           prerelease: false
           make_latest: true

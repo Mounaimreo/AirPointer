@@ -16,8 +16,17 @@ class PointerAccessibilityService : AccessibilityService() {
     companion object {
         @Volatile var instance: PointerAccessibilityService? = null
         fun tap(x: Float, y: Float) = instance?.dispatchTap(x, y)
+        fun doubleTap(x: Float, y: Float) = instance?.dispatchDoubleTap(x, y)
         fun updatePointer(x: Int, y: Int, pinching: Boolean) = instance?.showPointer(x, y, pinching)
         fun hidePointer() = instance?.removePointer()
+        fun longPress(x: Float, y: Float) = instance?.dispatchLongPress(x, y)
+        fun swipe(startX: Float, startY: Float, endX: Float, endY: Float, duration: Long = 280) =
+            instance?.dispatchSwipe(startX, startY, endX, endY, duration)
+        fun scrollUp(x: Float, y: Float) = instance?.dispatchSwipe(x, y - 220f, x, y + 220f, 300)
+        fun scrollDown(x: Float, y: Float) = instance?.dispatchSwipe(x, y + 220f, x, y - 220f, 300)
+        fun back() = instance?.performGlobalAction(GLOBAL_ACTION_BACK)
+        fun home() = instance?.performGlobalAction(GLOBAL_ACTION_HOME)
+        fun recentApps() = instance?.performGlobalAction(GLOBAL_ACTION_RECENTS)
     }
 
     override fun onServiceConnected() {
@@ -68,6 +77,33 @@ class PointerAccessibilityService : AccessibilityService() {
     private fun dispatchTap(x: Float, y: Float) {
         val path = Path().apply { moveTo(x, y) }
         val stroke = GestureDescription.StrokeDescription(path, 0, 80)
+        val gesture = GestureDescription.Builder().addStroke(stroke).build()
+        dispatchGesture(gesture, null, null)
+    }
+
+    private fun dispatchDoubleTap(x: Float, y: Float) {
+        val first = Path().apply { moveTo(x, y) }
+        val second = Path().apply { moveTo(x, y) }
+        val gesture = GestureDescription.Builder()
+            .addStroke(GestureDescription.StrokeDescription(first, 0, 70))
+            .addStroke(GestureDescription.StrokeDescription(second, 140, 70))
+            .build()
+        dispatchGesture(gesture, null, null)
+    }
+
+    private fun dispatchLongPress(x: Float, y: Float) {
+        val path = Path().apply { moveTo(x, y) }
+        val stroke = GestureDescription.StrokeDescription(path, 0, 500)
+        val gesture = GestureDescription.Builder().addStroke(stroke).build()
+        dispatchGesture(gesture, null, null)
+    }
+
+    private fun dispatchSwipe(startX: Float, startY: Float, endX: Float, endY: Float, duration: Long) {
+        val path = Path().apply {
+            moveTo(startX, startY)
+            lineTo(endX, endY)
+        }
+        val stroke = GestureDescription.StrokeDescription(path, 0, duration)
         val gesture = GestureDescription.Builder().addStroke(stroke).build()
         dispatchGesture(gesture, null, null)
     }
