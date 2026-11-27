@@ -21,14 +21,12 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Download and generate Gradle wrapper
+      - name: Install Gradle 8.2.2
         run: |
-          wget --tries=5 --timeout=30 \
-            https://downloads.gradle.org/distributions/gradle-8.2.2-bin.zip \
-            -O /tmp/gradle-8.2.2.zip
-          test -s /tmp/gradle-8.2.2.zip
-          unzip -q -o /tmp/gradle-8.2.2.zip -d /tmp
-          /tmp/gradle-8.2.2/bin/gradle wrapper --gradle-version 8.2.2
+          curl --fail --location --retry 3 \
+            https://github.com/gradle/gradle-distributions/releases/download/v8.2.2/gradle-8.2.2-bin.zip \
+            --output gradle.zip
+          unzip -q gradle.zip
 
       - name: Download hand tracker model
         run: |
@@ -39,8 +37,7 @@ jobs:
 
       - name: Build APK
         run: |
-          chmod +x gradlew
-          ./gradlew clean assembleDebug --stacktrace --no-daemon
+          ./gradle-8.2.2/bin/gradle clean assembleDebug --stacktrace --no-daemon
 
       - name: Copy downloadable APK
         run: cp app/build/outputs/apk/debug/app-debug.apk AirPointer-v1.1.0.apk
