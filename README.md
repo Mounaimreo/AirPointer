@@ -1,6 +1,6 @@
 # AirPointer
 
-التنزيل المباشر: https://github.com/Mounaimreo/AirPointer/releases/download/airpointer-latest/AirPointer-v1.2.0.apk
+التنزيل المباشر: https://github.com/Mounaimreo/AirPointer/releases/download/airpointer-v1.2.0/AirPointer-v1.2.0.apk
 
 لا يطلب التطبيق إذن الظهور فوق التطبيقات. يُعرض المؤشر كنافذة Accessibility Overlay بعد تفعيل خدمة AirPointer يدويًا من إعدادات سهولة الاستخدام. لا تقرأ الخدمة محتوى الشاشة، وتنفذ فقط النقرات التي يطلبها المستخدم بإشارة اليد.
 
