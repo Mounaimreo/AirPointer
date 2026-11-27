@@ -36,9 +36,22 @@ jobs:
             --output app/src/main/assets/hand_landmarker.task
 
       - name: Build APK
+        id: build_apk
+        continue-on-error: true
         run: |
           set -o pipefail
           ./gradle-8.9/bin/gradle clean assembleDebug --stacktrace --no-daemon 2>&1 | tee gradle-build.log
+
+      - name: Publish Gradle error summary
+        if: steps.build_apk.outcome == 'failure'
+        run: |
+          {
+            echo '## Gradle build failure'
+            echo '```text'
+            grep -n -E 'FAILURE:|What went wrong|Execution failed|e: |error:|Unresolved reference|Could not resolve|A problem occurred|Task .* FAILED' gradle-build.log | tail -n 160
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
 
       - name: Upload Gradle log on failure
         if: failure()
