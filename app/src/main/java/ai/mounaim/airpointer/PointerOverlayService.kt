@@ -46,7 +46,7 @@ class PointerOverlayService : Service() {
             params.x = x - 28
             params.y = y - 28
             windowManager.updateViewLayout(view, params)
-            view.setPressed(pinch)
+            view.setPinching(pinch)
         }
         return START_STICKY
     }
@@ -65,9 +65,9 @@ class PointerView(context: android.content.Context) : FrameLayout(context) {
     init { setWillNotDraw(false) }
     private var isPressed = false
 
-    fun setPressed(pressed: Boolean) {
-        if (isPressed != pressed) {
-            isPressed = pressed
+    fun setPinching(pinching: Boolean) {
+        if (isPressed != pinching) {
+            isPressed = pinching
             invalidate()
         }
     }
