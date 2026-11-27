@@ -21,10 +21,10 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Install Gradle 8.2.2
+      - name: Install Gradle 8.9
         run: |
           curl --fail --location --retry 3 \
-            https://github.com/gradle/gradle-distributions/releases/download/v8.2.2/gradle-8.2.2-bin.zip \
+            https://services.gradle.org/distributions/gradle-8.9-bin.zip \
             --output gradle.zip
           unzip -q gradle.zip
 
@@ -37,7 +37,7 @@ jobs:
 
       - name: Build APK
         run: |
-          ./gradle-8.2.2/bin/gradle clean assembleDebug --stacktrace --no-daemon
+          ./gradle-8.9/bin/gradle clean assembleDebug --stacktrace --no-daemon
 
       - name: Copy downloadable APK
         run: cp app/build/outputs/apk/debug/app-debug.apk AirPointer-v1.1.0.apk
