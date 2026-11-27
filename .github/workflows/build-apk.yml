@@ -37,7 +37,16 @@ jobs:
 
       - name: Build APK
         run: |
-          ./gradle-8.9/bin/gradle clean assembleDebug --stacktrace --no-daemon
+          set -o pipefail
+          ./gradle-8.9/bin/gradle clean assembleDebug --stacktrace --no-daemon 2>&1 | tee gradle-build.log
+
+      - name: Upload Gradle log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AirPointer-gradle-failure-log
+          path: gradle-build.log
+          if-no-files-found: ignore
 
       - name: Copy downloadable APK
         run: cp app/build/outputs/apk/debug/app-debug.apk AirPointer-v1.1.0.apk

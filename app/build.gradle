@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace 'ai.mounaim.airpointer'
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         applicationId 'ai.mounaim.airpointer'
